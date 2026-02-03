@@ -16,6 +16,10 @@ export async function GET(request: Request) {
   // Retrieve session for the access token needed by the external API
   const { data: { session } } = await supabase.auth.getSession()
 
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   // Get query parameters
   const { searchParams } = new URL(request.url)
   const q = searchParams.get('q')
