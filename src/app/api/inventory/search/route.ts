@@ -6,12 +6,15 @@ const EXTERNAL_API_URL = 'https://rhino-product-code-description.vercel.app/api/
 export async function GET(request: Request) {
   const supabase = await createClient()
 
-  // Verify user is authenticated and get session
-  const { data: { session } } = await supabase.auth.getSession()
+  // Verify user is authenticated
+  const { data: { user } } = await supabase.auth.getUser()
 
-  if (!session) {
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+
+  // Retrieve session for the access token needed by the external API
+  const { data: { session } } = await supabase.auth.getSession()
 
   // Get query parameters
   const { searchParams } = new URL(request.url)
