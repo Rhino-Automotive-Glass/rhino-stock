@@ -32,13 +32,32 @@ export async function proxy(request: NextRequest) {
   )
 
   // Retrieve user to ensure the session is refreshed and cookies are forwarded
-  await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  // Redirect unauthenticated users to login
+  if (
+    !user &&
+    !request.nextUrl.pathname.startsWith('/login') &&
+    !request.nextUrl.pathname.startsWith('/signup') &&
+    !request.nextUrl.pathname.startsWith('/api/auth')
+  ) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/login'
+    return NextResponse.redirect(url)
+  }
+
+  // Redirect authenticated users away from login/signup
+  if (user && (request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/signup'))) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/'
+    return NextResponse.redirect(url)
+  }
 
   return supabaseResponse
 }
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
