@@ -7,9 +7,12 @@ import { InventoryTable } from "./InventoryTable";
 
 interface InventoryListClientProps {
   initialItems: InventoryItem[];
+  currentUserEmail: string;
+  isAdmin?: boolean;
+  canVerify?: boolean;
 }
 
-export function InventoryListClient({ initialItems }: InventoryListClientProps) {
+export function InventoryListClient({ initialItems, currentUserEmail, isAdmin, canVerify }: InventoryListClientProps) {
   const router = useRouter();
   const [items, setItems] = useState<InventoryItem[]>(initialItems);
 
@@ -53,13 +56,16 @@ export function InventoryListClient({ initialItems }: InventoryListClientProps) 
     if (!item) return;
 
     await handleUpdate(id, {
-      confirmacion: verified,
+      confirmado_por: verified ? "pending" : null,
     });
   };
 
   return (
     <InventoryTable
       items={items}
+      currentUserEmail={currentUserEmail}
+      isAdmin={isAdmin}
+      canVerify={canVerify}
       onUpdate={handleUpdate}
       onDelete={handleDelete}
       onToggleVerified={handleToggleVerified}

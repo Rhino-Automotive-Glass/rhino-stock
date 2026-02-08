@@ -1,8 +1,19 @@
 import Link from "next/link";
-import { ThemeToggle } from "@/components/theme";
 import { InventoryForm } from "@/components/inventory";
+import { UserMenu } from "@/components/UserMenu";
+import { createClient } from "@/app/lib/supabase/server";
+import { getCurrentUser } from "@/app/lib/auth/user";
 
-export default function Home() {
+export default async function Home() {
+  const supabase = await createClient();
+  const user = await getCurrentUser(supabase);
+
+  // Format role name for display
+  const roleDisplay = user.roleName
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
@@ -32,9 +43,17 @@ export default function Home() {
               </p>
             </div>
           </div>
-          <ThemeToggle />
+          <UserMenu />
         </div>
       </header>
+
+      <div className="bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-3">
+          <p className="text-sm text-blue-900 dark:text-blue-100">
+            Bienvenido <span className="font-semibold">{user.email}</span> - <span className="font-medium">{roleDisplay}</span>
+          </p>
+        </div>
+      </div>
 
       <main className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">

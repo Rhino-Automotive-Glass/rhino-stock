@@ -9,7 +9,6 @@ const initialFormData: InventoryFormData = {
   etiquetado: "",
   ubicacion: "",
   unidades: 0,
-  confirmacion: false,
 };
 
 export function InventoryForm() {
@@ -181,28 +180,6 @@ export function InventoryForm() {
         <p className="text-xs text-gray-500 dark:text-gray-400">
           Cantidad de unidades disponibles
         </p>
-      </div>
-
-      <div className="flex items-start gap-3 p-4 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50">
-        <input
-          type="checkbox"
-          id="confirmacion"
-          name="confirmacion"
-          checked={formData.confirmacion}
-          onChange={handleChange}
-          className="mt-1 w-5 h-5 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 focus:ring-2 cursor-pointer"
-        />
-        <div>
-          <label
-            htmlFor="confirmacion"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-200 cursor-pointer"
-          >
-            Confirmacion
-          </label>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            Marque esta casilla para confirmar la verificacion del inventario
-          </p>
-        </div>
       </div>
 
       <div className="pt-4">

@@ -7,20 +7,22 @@ import { EtiquetadoSearch } from "./EtiquetadoSearch";
 
 interface EditInventoryModalProps {
   item: InventoryItem;
+  isCreator: boolean;
   onClose: () => void;
   onSave: (data: Partial<InventoryItem>) => Promise<void>;
 }
 
 export function EditInventoryModal({
   item,
+  isCreator,
   onClose,
   onSave,
 }: EditInventoryModalProps) {
   const [formData, setFormData] = useState({
     etiquetado: item.etiquetado,
     ubicacion: item.ubicacion,
-    unidades: item.unidades,
-    confirmacion: item.confirmacion,
+    // Creator edits their own count (unidades), editor edits unidades_2
+    countValue: isCreator ? (item.unidades ?? 0) : (item.unidades_2 ?? 0),
   });
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,7 +51,19 @@ export function EditInventoryModal({
     setError(null);
 
     try {
-      await onSave(formData);
+      // Send the count to the correct field based on role
+      const saveData: Partial<InventoryItem> = {
+        etiquetado: formData.etiquetado,
+        ubicacion: formData.ubicacion,
+      };
+
+      if (isCreator) {
+        saveData.unidades = formData.countValue;
+      } else {
+        saveData.unidades_2 = formData.countValue;
+      }
+
+      await onSave(saveData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al guardar");
     } finally {
@@ -60,7 +74,7 @@ export function EditInventoryModal({
   const isFormValid =
     formData.etiquetado.trim() !== "" &&
     formData.ubicacion.trim() !== "" &&
-    formData.unidades > 0;
+    formData.countValue > 0;
 
   const modalContent = (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -139,42 +153,25 @@ export function EditInventoryModal({
 
             <div className="space-y-2">
               <label
-                htmlFor="edit-unidades"
+                htmlFor="edit-countValue"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-200"
               >
-                Unidades
+                {isCreator ? "Unidades (tu conteo)" : "Unidades (tu conteo)"}
               </label>
               <input
                 type="number"
-                id="edit-unidades"
-                name="unidades"
-                value={formData.unidades}
+                id="edit-countValue"
+                name="countValue"
+                value={formData.countValue}
                 onChange={handleChange}
                 min="0"
                 className="input-base"
               />
-            </div>
-
-            <div className="flex items-start gap-3 p-4 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50">
-              <input
-                type="checkbox"
-                id="edit-confirmacion"
-                name="confirmacion"
-                checked={formData.confirmacion}
-                onChange={handleChange}
-                className="mt-1 w-5 h-5 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 focus:ring-2 cursor-pointer"
-              />
-              <div>
-                <label
-                  htmlFor="edit-confirmacion"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-200 cursor-pointer"
-                >
-                  Confirmacion
-                </label>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Marque esta casilla para confirmar la verificacion
-                </p>
-              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {isCreator
+                  ? "Este es tu conteo original"
+                  : "Ingresa tu conteo independiente"}
+              </p>
             </div>
 
             <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">

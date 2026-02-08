@@ -1,32 +1,49 @@
 import Link from "next/link";
-import { ThemeToggle } from "@/components/theme";
 import { InventoryListClient } from "@/components/inventory";
+import { UserMenu } from "@/components/UserMenu";
 import { createClient } from "@/app/lib/supabase/server";
+import { getCurrentUser } from "@/app/lib/auth/user";
 import type { InventoryItem } from "@/types/inventory";
 
-async function getInventory(): Promise<InventoryItem[]> {
+async function getInventoryAndUser(): Promise<{ items: InventoryItem[]; email: string; isAdmin: boolean; canVerify: boolean; roleName: string }> {
   try {
     const supabase = await createClient();
 
-    const { data, error } = await supabase
-      .from("inventory")
-      .select("*")
-      .order("created_at", { ascending: false });
+    const [currentUser, { data, error }] = await Promise.all([
+      getCurrentUser(supabase),
+      supabase
+        .from("inventory")
+        .select("*")
+        .order("created_at", { ascending: false }),
+    ]);
 
     if (error) {
       console.error("Error fetching inventory:", error);
-      return [];
+      return { items: [], email: currentUser.email, isAdmin: currentUser.isAdmin, canVerify: currentUser.canVerify, roleName: currentUser.roleName };
     }
 
-    return data || [];
+    // Admins see both counters; regular users only see their own
+    const items = currentUser.isAdmin ? (data || []) : (data || []).map((item: InventoryItem) => ({
+      ...item,
+      unidades: item.contado_por === currentUser.email ? item.unidades : null,
+      unidades_2: item.contado_por_2 === currentUser.email ? item.unidades_2 : null,
+    }));
+
+    return { items, email: currentUser.email, isAdmin: currentUser.isAdmin, canVerify: currentUser.canVerify, roleName: currentUser.roleName };
   } catch (error) {
     console.error("Error fetching inventory:", error);
-    return [];
+    return { items: [], email: "Unknown", isAdmin: false, canVerify: false, roleName: "viewer" };
   }
 }
 
 export default async function ListaInventario() {
-  const inventory = await getInventory();
+  const { items: inventory, email: currentUserEmail, isAdmin, canVerify, roleName } = await getInventoryAndUser();
+
+  // Format role name for display
+  const roleDisplay = roleName
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 
   return (
     <div className="min-h-screen bg-background">
@@ -59,9 +76,17 @@ export default async function ListaInventario() {
               </div>
             </Link>
           </div>
-          <ThemeToggle />
+          <UserMenu />
         </div>
       </header>
+
+      <div className="bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-3">
+          <p className="text-sm text-blue-900 dark:text-blue-100">
+            Bienvenido <span className="font-semibold">{currentUserEmail}</span> - <span className="font-medium">{roleDisplay}</span>
+          </p>
+        </div>
+      </div>
 
       <main className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="card p-6 md:p-8">
@@ -94,7 +119,7 @@ export default async function ListaInventario() {
               Agregar
             </Link>
           </div>
-          <InventoryListClient initialItems={inventory} />
+          <InventoryListClient initialItems={inventory} currentUserEmail={currentUserEmail} isAdmin={isAdmin} canVerify={canVerify} />
         </div>
       </main>
 

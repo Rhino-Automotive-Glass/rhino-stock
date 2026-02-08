@@ -6,6 +6,9 @@ import { EditInventoryModal } from "./EditInventoryModal";
 
 interface InventoryTableProps {
   items: InventoryItem[];
+  currentUserEmail: string;
+  isAdmin?: boolean;
+  canVerify?: boolean;
   onUpdate: (id: string, data: Partial<InventoryItem>) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onToggleVerified: (id: string, verified: boolean) => Promise<void>;
@@ -13,6 +16,9 @@ interface InventoryTableProps {
 
 export function InventoryTable({
   items,
+  currentUserEmail,
+  isAdmin,
+  canVerify,
   onUpdate,
   onDelete,
   onToggleVerified,
@@ -102,12 +108,6 @@ export function InventoryTable({
                 scope="col"
                 className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
               >
-                Confirmacion
-              </th>
-              <th
-                scope="col"
-                className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
-              >
                 Verified
               </th>
               <th
@@ -147,42 +147,26 @@ export function InventoryTable({
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-center">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200">
-                    {item.unidades}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-center">
-                  {item.confirmacion ? (
-                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-100 dark:bg-green-900/50">
-                      <svg
-                        className="w-4 h-4 text-green-600 dark:text-green-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
+                  {isAdmin ? (
+                    <div className="flex items-center justify-center gap-1.5">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200">
+                        {item.unidades ?? "—"}
+                      </span>
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-200">
+                        {item.unidades_2 ?? "—"}
+                      </span>
+                    </div>
+                  ) : item.unidades != null ? (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200">
+                      {item.unidades}
+                    </span>
+                  ) : item.unidades_2 != null ? (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-200">
+                      {item.unidades_2}
                     </span>
                   ) : (
-                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-700">
-                      <svg
-                        className="w-4 h-4 text-gray-400 dark:text-gray-500"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
+                    <span className="text-xs text-gray-400 dark:text-gray-500">
+                      —
                     </span>
                   )}
                 </td>
@@ -191,7 +175,8 @@ export function InventoryTable({
                     type="checkbox"
                     checked={!!item.confirmado_por}
                     onChange={(e) => onToggleVerified(item.id, e.target.checked)}
-                    className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded cursor-pointer"
+                    disabled={!canVerify}
+                    className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                     aria-label="Mark as verified"
                   />
                 </td>
@@ -215,6 +200,14 @@ export function InventoryTable({
                         {item.contado_por}
                       </span>
                     </div>
+                    {item.contado_por_2 && (
+                      <div className="flex items-center gap-2 text-xs">
+                        <span className="text-gray-500 dark:text-gray-400">Contado 2:</span>
+                        <span className="font-medium text-gray-700 dark:text-gray-200">
+                          {item.contado_por_2}
+                        </span>
+                      </div>
+                    )}
                     {item.confirmado_por && (
                       <div className="flex items-center gap-2 text-xs">
                         <span className="text-gray-500 dark:text-gray-400">Confirmado:</span>
@@ -297,6 +290,7 @@ export function InventoryTable({
       {editingItem && (
         <EditInventoryModal
           item={editingItem}
+          isCreator={editingItem.contado_por === currentUserEmail}
           onClose={() => setEditingItem(null)}
           onSave={handleSaveEdit}
         />
