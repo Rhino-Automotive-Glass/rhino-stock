@@ -25,6 +25,7 @@ export function InventoryTable({
 }: InventoryTableProps) {
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [verifyingIds, setVerifyingIds] = useState<string[]>([]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("es-MX", {
@@ -51,6 +52,17 @@ export function InventoryTable({
     if (editingItem) {
       await onUpdate(editingItem.id, data);
       setEditingItem(null);
+    }
+  };
+
+  const handleVerifyToggle = async (id: string, verified: boolean) => {
+    if (verifyingIds.includes(id)) return;
+
+    setVerifyingIds((prev) => [...prev, id]);
+    try {
+      await onToggleVerified(id, verified);
+    } finally {
+      setVerifyingIds((prev) => prev.filter((verifyingId) => verifyingId !== id));
     }
   };
 
@@ -131,10 +143,18 @@ export function InventoryTable({
             </tr>
           </thead>
           <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-            {items.map((item) => (
+            {items.map((item) => {
+              const hasBothCounts = item.unidades != null && item.unidades_2 != null;
+              const hasCountMismatch = hasBothCounts && item.unidades !== item.unidades_2;
+
+              return (
               <tr
                 key={item.id}
-                className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                className={`transition-colors ${
+                  hasCountMismatch
+                    ? "bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30"
+                    : "hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                }`}
               >
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className="text-sm font-medium text-gray-900 dark:text-white">
@@ -155,6 +175,11 @@ export function InventoryTable({
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-200">
                         {item.unidades_2 ?? "—"}
                       </span>
+                      {hasCountMismatch && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300">
+                          ‼️
+                        </span>
+                      )}
                     </div>
                   ) : item.unidades != null ? (
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200">
@@ -171,14 +196,40 @@ export function InventoryTable({
                   )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-center">
-                  <input
-                    type="checkbox"
-                    checked={!!item.confirmado_por}
-                    onChange={(e) => onToggleVerified(item.id, e.target.checked)}
-                    disabled={!canVerify}
-                    className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                    aria-label="Mark as verified"
-                  />
+                  {verifyingIds.includes(item.id) ? (
+                    <div className="inline-flex items-center justify-center h-5 w-5">
+                      <svg
+                        className="animate-spin h-5 w-5 text-blue-600 dark:text-blue-400"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        aria-label="Updating verification"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                        />
+                      </svg>
+                    </div>
+                  ) : (
+                    <input
+                      type="checkbox"
+                      checked={!!item.confirmado_por}
+                      onChange={(e) => handleVerifyToggle(item.id, e.target.checked)}
+                      disabled={!canVerify}
+                      className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                      aria-label="Mark as verified"
+                    />
+                  )}
                 </td>
                 <td className="px-6 py-4">
                   <div className="space-y-1">
@@ -282,7 +333,8 @@ export function InventoryTable({
                   </div>
                 </td>
               </tr>
-            ))}
+            );
+            })}
           </tbody>
         </table>
       </div>
