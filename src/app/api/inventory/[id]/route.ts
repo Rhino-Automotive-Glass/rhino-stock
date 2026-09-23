@@ -14,7 +14,7 @@ export async function PATCH(
 
     // Fetch the existing item to determine the user's role
     const { data: existingItem, error: fetchError } = await supabase
-      .from('inventory')
+      .from('product_stock')
       .select('contado_por')
       .eq('id', id)
       .single()
@@ -55,7 +55,7 @@ export async function PATCH(
     }
 
     const { data, error } = await supabase
-      .from('inventory')
+      .from('product_stock')
       .update(updateData)
       .eq('id', id)
       .select()
@@ -87,7 +87,7 @@ export async function DELETE(
     const supabase = await createClient()
 
     const { error } = await supabase
-      .from('inventory')
+      .from('product_stock')
       .delete()
       .eq('id', id)
 

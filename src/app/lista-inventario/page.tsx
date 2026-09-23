@@ -12,7 +12,7 @@ async function getInventoryAndUser(): Promise<{ items: InventoryItem[]; email: s
     const [currentUser, { data, error }] = await Promise.all([
       getCurrentUser(supabase),
       supabase
-        .from("inventory")
+        .from("product_stock")
         .select("*")
         .order("created_at", { ascending: false }),
     ]);

@@ -8,7 +8,7 @@ export async function GET() {
     const { email: currentUser, isAdmin } = await getCurrentUser(supabase)
 
     const { data, error } = await supabase
-      .from('inventory')
+      .from('product_stock')
       .select('*')
       .order('created_at', { ascending: false })
 
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { data, error } = await supabase
-      .from('inventory')
+      .from('product_stock')
       .insert({
         etiquetado,
         ubicacion,
