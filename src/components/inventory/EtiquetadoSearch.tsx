@@ -181,7 +181,10 @@ export function EtiquetadoSearch({
           className="input-base"
           placeholder={placeholder}
           autoComplete="off"
-          aria-expanded={isOpen}
+          role="combobox"
+          aria-expanded={isOpen && results.length > 0}
+          aria-controls={isOpen && results.length > 0 ? `${id}-results` : undefined}
+          aria-activedescendant={isOpen && highlightedIndex >= 0 ? `${id}-option-${highlightedIndex}` : undefined}
           aria-haspopup="listbox"
           aria-autocomplete="list"
         />
@@ -224,10 +227,11 @@ export function EtiquetadoSearch({
               No se encontraron resultados para &quot;{value}&quot;
             </div>
           ) : (
-            <ul role="listbox">
+            <ul id={`${id}-results`} role="listbox">
               {results.map((product, index) => (
                 <li
                   key={product.id}
+                  id={`${id}-option-${index}`}
                   role="option"
                   aria-selected={index === highlightedIndex}
                   onClick={() => handleSelect(product)}
