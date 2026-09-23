@@ -1,0 +1,27 @@
+-- Already applied in production; recorded here.
+-- Production is the source of truth. Inspected 2026-09-23.
+-- Record only: every SQL statement below is commented out. Never replay this
+-- file as schema setup; use production schema when preparing a new database.
+--
+-- The table created by 20250202_create_inventory.sql was renamed from
+-- public.inventory to public.product_stock. Legacy idx_inventory_* index names
+-- remain. Production no longer has the old confirmacion column.
+--
+-- ALTER TABLE public.inventory RENAME TO product_stock;
+-- ALTER TABLE public.product_stock DROP COLUMN confirmacion;
+--
+-- Production RLS and privileges, as applied by migration 010:
+-- ALTER TABLE public.product_stock ENABLE ROW LEVEL SECURITY;
+-- REVOKE ALL ON public.product_stock FROM anon;
+--
+-- Production policy, as applied by migration 018:
+-- DROP POLICY IF EXISTS "Authenticated users can access stock" ON public.product_stock;
+-- CREATE POLICY "Users with a role can access stock"
+--   ON public.product_stock
+--   FOR ALL
+--   TO authenticated
+--   USING ((SELECT public.current_user_hierarchy_level()) >= 10)
+--   WITH CHECK ((SELECT public.current_user_hierarchy_level()) >= 10);
+--
+-- Production function hardening, as applied by migration 013:
+-- ALTER FUNCTION public.update_updated_at_column() SET search_path = '';
